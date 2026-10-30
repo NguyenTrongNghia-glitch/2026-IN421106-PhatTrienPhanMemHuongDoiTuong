@@ -13,13 +13,24 @@ public class Club
     // TODO (Nhiệm vụ 4): chuyển luật kiểm tra tên từ ClubManager.CreateClub vào đây.
     // Tên rỗng/toàn khoảng trắng -> ArgumentException; dài hơn MaxNameLength -> ArgumentException.
     public static Club Create(string name, string description)
+{
+    if (string.IsNullOrWhiteSpace(name))
+        throw new ArgumentException("Tên CLB không được để trống.", nameof(name));
+
+    if (name.Length > MaxNameLength)
+        throw new ArgumentException($"Tên CLB không được dài quá {MaxNameLength} ký tự.", nameof(name));
+
+    return new Club
     {
-        throw new NotImplementedException();
-    }
+        Id = Guid.NewGuid(),
+        Name = name,
+        Description = description
+    };
+}
 
     // TODO (Nhiệm vụ 4): trả về true khi số thành viên hiện tại còn nhỏ hơn MaxMembers.
     public bool HasRoom(int currentMemberCount)
     {
-        throw new NotImplementedException();
+        return currentMemberCount < MaxMembers;
     }
 }
