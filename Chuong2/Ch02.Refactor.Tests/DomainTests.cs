@@ -1,3 +1,7 @@
+using EduHub.Ch02.Logging;
+using EduHub.Ch02.Notifications;
+using EduHub.Ch02.Repositories;
+using EduHub.Ch02.Services;
 using EduHub.Ch02;
 using EduHub.Ch02.Domain;
 
@@ -7,15 +11,18 @@ namespace Ch02.Refactor.Tests;
 // Mỗi test chỉ kiểm tra MỘT hành vi. Đặt tên: TênMethod_TìnhHuống_KếtQuảMongĐợi.
 public class DomainTests
 {
-    // Test mẫu đã viết sẵn: chạy được ngay trên ClubManager hiện tại.
-    [Fact]
+        [Fact]
     public void CreateClub_WithEmptyName_ThrowsArgumentException()
     {
         // Arrange
-        var manager = new ClubManager();
+        var service = new ClubService(
+            new InMemoryClubRepository(),
+            new InMemoryMemberRepository(),
+            new EmailNotificationService(),
+            new ConsoleLogger());
 
         // Act
-        var act = () => manager.CreateClub("", "mô tả", "p@gmail.com");
+        var act = () => service.CreateClub("", "mô tả", "p@gmail.com");
 
         // Assert
         Assert.Throws<ArgumentException>(act);
