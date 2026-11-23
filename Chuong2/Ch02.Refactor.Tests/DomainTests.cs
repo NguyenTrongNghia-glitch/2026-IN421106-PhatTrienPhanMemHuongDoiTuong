@@ -1,0 +1,162 @@
+using EduHub.Ch02.Logging;
+using EduHub.Ch02.Notifications;
+using EduHub.Ch02.Repositories;
+using EduHub.Ch02.Services;
+using EduHub.Ch02;
+using EduHub.Ch02.Domain;
+
+namespace Ch02.Refactor.Tests;
+
+// Mẫu AAA: Arrange (chuẩn bị) - Act (thực hiện) - Assert (kiểm tra).
+// Mỗi test chỉ kiểm tra MỘT hành vi. Đặt tên: TênMethod_TìnhHuống_KếtQuảMongĐợi.
+public class DomainTests
+{
+        [Fact]
+    public void CreateClub_WithEmptyName_ThrowsArgumentException()
+    {
+        // Arrange
+        var service = new ClubService(
+            new InMemoryClubRepository(),
+            new InMemoryMemberRepository(),
+            new EmailNotificationService(),
+            new ConsoleLogger());
+
+        // Act
+        var act = () => service.CreateClub("", "mô tả", "p@gmail.com");
+
+        // Assert
+        Assert.Throws<ArgumentException>(act);
+    }
+
+    // ---------- Club ----------
+
+    [Fact]
+    public void Club_Create_WithValidName_ReturnsClub()
+    {
+        // Arrange
+        var name = "CLB Lập trình";
+        var description = "Sinh hoạt mỗi tuần";
+
+        // Act
+        var club = Club.Create(name, description);
+
+        // Assert
+        Assert.Equal(name, club.Name);
+        Assert.Equal(description, club.Description);
+        Assert.NotEqual(Guid.Empty, club.Id);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Club_Create_WithInvalidName_ThrowsArgumentException(string name)
+    {
+        // Arrange
+        var description = "mô tả";
+
+        // Act
+        var act = () => Club.Create(name, description);
+
+        // Assert
+        Assert.Throws<ArgumentException>(act);
+    }
+
+    [Fact]
+    public void Club_Create_WithNameLongerThanMax_ThrowsArgumentException()
+    {
+        // Arrange
+        var longName = new string('a', Club.MaxNameLength + 1);
+
+        // Act
+        var act = () => Club.Create(longName, "mô tả");
+
+        // Assert
+        Assert.Throws<ArgumentException>(act);
+    }
+
+    [Fact]
+    public void Club_HasRoom_BelowMaxMembers_ReturnsTrue()
+    {
+        // Arrange
+        var club = Club.Create("CLB", "mô tả");
+
+        // Act
+        var result = club.HasRoom(Club.MaxMembers - 1); // 49
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void Club_HasRoom_AtMaxMembers_ReturnsFalse()
+    {
+        // Arrange
+        var club = Club.Create("CLB", "mô tả");
+
+        // Act
+        var result = club.HasRoom(Club.MaxMembers); // 50
+
+        // Assert
+        Assert.False(result);
+    }
+
+    // ---------- Event ----------
+
+    [Fact]
+    public void Event_Register_NewMember_ReturnsTrue()
+    {
+        // Arrange
+        var ev = new Event { Title = "Workshop" };
+        var memberId = Guid.NewGuid();
+
+        // Act
+        var result = ev.Register(memberId);
+
+        // Assert
+        Assert.True(result);
+        Assert.Contains(memberId, ev.RegisteredMemberIds);
+    }
+
+    [Fact]
+    public void Event_Register_SameMemberTwice_ReturnsFalse()
+    {
+        // Arrange
+        var ev = new Event { Title = "Workshop" };
+        var memberId = Guid.NewGuid();
+        ev.Register(memberId);
+
+        // Act
+        var result = ev.Register(memberId);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void Event_CheckIn_UnregisteredMember_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var ev = new Event { Title = "Workshop" };
+
+        // Act
+        var act = () => ev.CheckIn(Guid.NewGuid());
+
+        // Assert
+        Assert.Throws<InvalidOperationException>(act);
+    }
+
+    [Fact]
+    public void Event_CheckIn_RegisteredMember_AddsToCheckedInList()
+    {
+        // Arrange
+        var ev = new Event { Title = "Workshop" };
+        var memberId = Guid.NewGuid();
+        ev.Register(memberId);
+
+        // Act
+        ev.CheckIn(memberId);
+
+        // Assert
+        Assert.Contains(memberId, ev.CheckedInMemberIds);
+    }
+}
